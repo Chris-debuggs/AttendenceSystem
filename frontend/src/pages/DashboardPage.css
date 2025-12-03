@@ -1,0 +1,37 @@
+.dashboard-page {}
+
+.section-header {
+    margin: 3rem 0 1.5rem;
+}
+
+.section-header h2 {
+    font-size: 1.5rem;
+}
+
+.nav-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.nav-card {
+    cursor: pointer;
+    text-align: center;
+    padding: 2.5rem 2rem;
+    transition: var(--transition);
+}
+
+.nav-card:hover {
+    transform: translateY(-8px);
+    border-color: var(--accent-primary);
+}
+
+.nav-card-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.nav-card h3 {
+    font-size: 1.25rem;
+    color: var(--text-primary);
+}

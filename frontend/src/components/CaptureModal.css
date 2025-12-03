@@ -1,0 +1,16 @@
+.capture-modal {
+    max-width: 700px;
+}
+
+.camera-preview {
+    background: var(--bg-tertiary);
+    border-radius: var(--border-radius-sm);
+    overflow: hidden;
+    margin: 1.5rem 0;
+}
+
+.camera-preview video {
+    width: 100%;
+    height: auto;
+    display: block;
+}

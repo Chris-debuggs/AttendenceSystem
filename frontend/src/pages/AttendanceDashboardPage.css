@@ -1,0 +1,113 @@
+.attendance-dashboard-page {}
+
+.controls-card {
+    margin-bottom: 1.5rem;
+}
+
+.controls-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.legend {
+    margin-bottom: 1.5rem;
+}
+
+.legend h4 {
+    margin-bottom: 1rem;
+}
+
+.legend-items {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.legend-item span {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--border-radius-sm);
+    text-align: center;
+    line-height: 32px;
+    font-weight: 600;
+}
+
+.calendar-wrapper {
+    overflow-x: auto;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+}
+
+.attendance-table {
+    min-width: 100%;
+    font-size: 0.85rem;
+}
+
+.attendance-table th,
+.attendance-table td {
+    padding: 0.75rem 0.5rem;
+    text-align: center;
+    min-width: 40px;
+}
+
+.sticky-col {
+    position: sticky;
+    left: 0;
+    background: var(--bg-card);
+    z-index: 2;
+    border-right: 2px solid var(--border-color);
+    min-width: 150px !important;
+}
+
+.employee-name {
+    text-align: left;
+    font-weight: 500;
+    padding-left: 1rem;
+}
+
+.weekend-col {
+    background: rgba(99, 102, 241, 0.05);
+}
+
+.holiday-col {
+    background: rgba(236, 72, 153, 0.05);
+}
+
+.status-present {
+    background: var(--success-bg);
+    color: var(--success);
+}
+
+.status-late {
+    background: var(--warning-bg);
+    color: var(--warning);
+}
+
+.status-absent {
+    background: var(--error-bg);
+    color: var(--error);
+}
+
+.status-leave {
+    background: var(--info-bg);
+    color: var(--info);
+}
+
+.status-holiday {
+    background: rgba(236, 72, 153, 0.1);
+    color: #ec4899;
+}
+
+.attendance-table tbody td {
+    font-weight: 600;
+}

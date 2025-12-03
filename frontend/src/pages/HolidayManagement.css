@@ -1,0 +1,44 @@
+.holiday-management-page {}
+
+.content-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+    .content-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.holiday-list {
+    margin-top: 1rem;
+}
+
+.holiday-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    background: var(--bg-tertiary);
+    border-radius: var(--border-radius-sm);
+}
+
+.holiday-name {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.holiday-date {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.working-days-list h4 {
+    margin-bottom: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
