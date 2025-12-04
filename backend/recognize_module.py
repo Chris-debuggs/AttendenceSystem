@@ -3,7 +3,7 @@
 import cv2
 import pickle
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timedelta
 from insightface.app import FaceAnalysis
 import os
 from database import get_db_connection, get_all_face_embeddings, get_office_settings, get_employee_email
@@ -110,10 +110,15 @@ def log_attendance(employee_name: str, status: str):
     conn = get_db_connection()
     cur = conn.cursor()
     try:
+        # Use Python datetime to get local time instead of SQLite's UTC time
+        now = datetime.now()
+        current_time = now.strftime('%H:%M:%S')
+        current_date = now.strftime('%Y-%m-%d')
+        
         cur.execute("""
             INSERT INTO attendance (employee_id, check_in, status, date)
-            VALUES ((SELECT id FROM employees WHERE name = ?), CURRENT_TIMESTAMP, ?, CURRENT_DATE)
-        """, (employee_name, status))
+            VALUES ((SELECT id FROM employees WHERE name = ?), ?, ?, ?)
+        """, (employee_name, current_time, status, current_date))
         conn.commit()
         return True
     except Exception as e:
@@ -175,10 +180,34 @@ def process_attendance(name: str, score: float):
 
     # Fetch on_time_limit from office_settings
     settings = get_office_settings()
-    if settings and settings.get('on_time_limit'):
-        on_time_limit = datetime.strptime(settings['on_time_limit'], "%H:%M:%S").time()
-    else:
-        on_time_limit = datetime.strptime("09:30:00", "%H:%M:%S").time()  # fallback
+    
+    # Default values
+    start_time_str = "09:00:00"
+    on_time_limit_val = "15" # Default 15 minutes grace
+    
+    if settings:
+        start_time_str = settings.get('start_time', "09:00:00")
+        on_time_limit_val = settings.get('on_time_limit', "15")
+
+    try:
+        # First, try to parse as a full time string (HH:MM:SS)
+        on_time_limit = datetime.strptime(on_time_limit_val, "%H:%M:%S").time()
+    except ValueError:
+        # If that fails, assume it's a number of minutes from start_time
+        try:
+            minutes = int(on_time_limit_val)
+            # Handle start_time format which might be HH:MM or HH:MM:SS
+            try:
+                start_time = datetime.strptime(start_time_str, "%H:%M:%S")
+            except ValueError:
+                start_time = datetime.strptime(start_time_str, "%H:%M")
+                
+            on_time_limit_dt = start_time + timedelta(minutes=minutes)
+            on_time_limit = on_time_limit_dt.time()
+        except Exception as e:
+            # Fallback if everything fails
+            print(f"[WARNING] Could not parse on_time_limit: {on_time_limit_val}. Error: {e}. Using default 09:30:00")
+            on_time_limit = datetime.strptime("09:30:00", "%H:%M:%S").time()
 
     if attendance_status and attendance_status["checked_in"]:
         print(f"[DEBUG] {name} is checked in.")

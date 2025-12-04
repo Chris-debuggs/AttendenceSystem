@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
+import {
+    MdDashboard,
+    MdPeople,
+    MdCalendarToday,
+    MdCelebration,
+    MdBeachAccess,
+    MdAttachMoney,
+    MdSettings,
+    MdLogout
+} from 'react-icons/md';
 import './App.css';
 import Toast from './components/Toast';
 
@@ -32,48 +42,48 @@ const AdminLayout = ({ children }) => {
         <div className="admin-layout">
             <aside className="sidebar">
                 <div className="sidebar-brand">
-                    <h2>📊 Admin Panel</h2>
+                    <h2><MdDashboard /> Admin Panel</h2>
                 </div>
                 <nav>
                     <ul className="sidebar-nav">
                         <li>
                             <Link to="/dashboard">
-                                <span>🏠</span> Dashboard
+                                <MdDashboard size={20} /> Dashboard
                             </Link>
                         </li>
                         <li>
                             <Link to="/employees">
-                                <span>👥</span> Employees
+                                <MdPeople size={20} /> Employees
                             </Link>
                         </li>
                         <li>
                             <Link to="/attendance">
-                                <span>📅</span> Attendance
+                                <MdCalendarToday size={20} /> Attendance
                             </Link>
                         </li>
                         <li>
                             <Link to="/holidays">
-                                <span>🎉</span> Holidays
+                                <MdCelebration size={20} /> Holidays
                             </Link>
                         </li>
                         <li>
                             <Link to="/leaves">
-                                <span>🏖️</span> Leaves
+                                <MdBeachAccess size={20} /> Leaves
                             </Link>
                         </li>
                         <li>
                             <Link to="/payroll">
-                                <span>💰</span> Payroll
+                                <MdAttachMoney size={20} /> Payroll
                             </Link>
                         </li>
                         <li>
                             <Link to="/settings">
-                                <span>⚙️</span> Settings
+                                <MdSettings size={20} /> Settings
                             </Link>
                         </li>
                         <li>
                             <a href="#" onClick={handleLogout} style={{ color: 'var(--error)' }}>
-                                <span>🚪</span> Logout
+                                <MdLogout size={20} /> Logout
                             </a>
                         </li>
                     </ul>

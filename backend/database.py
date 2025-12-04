@@ -217,13 +217,17 @@ def punch_out_employee(employee_name: str, date: str):
     conn = get_db_connection()
     cur = conn.cursor()
     try:
+        # Use Python datetime to get local time instead of SQLite's UTC time
+        from datetime import datetime
+        current_time = datetime.now().strftime('%H:%M:%S')
+        
         # SQLite doesn't support RETURNING in UPDATE in older versions, but we can check rowcount
         cur.execute("""
             UPDATE attendance 
-            SET check_out = CURRENT_TIMESTAMP
+            SET check_out = ?
             WHERE employee_id = (SELECT id FROM employees WHERE name = ?)
             AND date = ? AND check_out IS NULL
-        """, (employee_name, date))
+        """, (current_time, employee_name, date))
         
         if cur.rowcount > 0:
             conn.commit()

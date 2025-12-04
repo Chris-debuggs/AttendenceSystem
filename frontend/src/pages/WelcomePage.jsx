@@ -1,40 +1,142 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { MdSettings } from 'react-icons/md';
 import PunchOutModal from '../components/PunchOutModal';
 import './WelcomePage.css';
 
 const WelcomePage = () => {
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
+    const particleCanvasRef = useRef(null);
     const [stream, setStream] = useState(null);
     const [recognizedEmployee, setRecognizedEmployee] = useState(null);
-    const [stats, setStats] = useState(null);
-    const [showWelcome, setShowWelcome] = useState(false);
+    const [message, setMessage] = useState(null);
     const [showPunchOut, setShowPunchOut] = useState(false);
     const [scanning, setScanning] = useState(false);
+    const [currentTime, setCurrentTime] = useState(new Date());
+    const [showConfetti, setShowConfetti] = useState(false);
+    const [showSparkles, setShowSparkles] = useState(false);
     const navigate = useNavigate();
+
+    // Particle animation
+    useEffect(() => {
+        const canvas = particleCanvasRef.current;
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const particles = [];
+        const particleCount = 50;
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 3 + 1;
+                this.speedX = Math.random() * 0.5 - 0.25;
+                this.speedY = Math.random() * 0.5 - 0.25;
+                this.opacity = Math.random() * 0.5 + 0.3;
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                if (this.x > canvas.width) this.x = 0;
+                if (this.x < 0) this.x = canvas.width;
+                if (this.y > canvas.height) this.y = 0;
+                if (this.y < 0) this.y = canvas.height;
+            }
+
+            draw() {
+                ctx.fillStyle = `rgba(99, 102, 241, ${this.opacity})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        for (let i = 0; i < particleCount; i++) {
+            particles.push(new Particle());
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        const handleResize = () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     useEffect(() => {
         startCamera();
-        fetchStats();
-        const statsInterval = setInterval(fetchStats, 10000); // Update stats every 10 seconds
-
+        const timeInterval = setInterval(() => setCurrentTime(new Date()), 1000);
         return () => {
             stopCamera();
-            clearInterval(statsInterval);
+            clearInterval(timeInterval);
         };
     }, []);
 
     useEffect(() => {
-        if (stream && !scanning) {
+        if (stream && !scanning && !message) {
             const scanInterval = setInterval(() => {
                 scanFace();
-            }, 2500); // Scan every 2.5 seconds
+            }, 2500);
 
             return () => clearInterval(scanInterval);
         }
-    }, [stream, scanning]);
+    }, [stream, scanning, message]);
+
+    // Auto-clear message only if NOT showing punch out option
+    useEffect(() => {
+        if (message && message.type === 'welcome' && !recognizedEmployee?.already_present) {
+            const timer = setTimeout(() => {
+                setMessage(null);
+                setRecognizedEmployee(null);
+            }, 5000);
+            return () => clearTimeout(timer);
+        }
+
+        // Goodbye messages auto-clear
+        if (message && message.type === 'goodbye') {
+            const timer = setTimeout(() => {
+                setMessage(null);
+                setRecognizedEmployee(null);
+            }, 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [message, recognizedEmployee]);
+
+    // Confetti effect
+    useEffect(() => {
+        if (showConfetti) {
+            const timer = setTimeout(() => setShowConfetti(false), 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [showConfetti]);
+
+    // Sparkles effect
+    useEffect(() => {
+        if (showSparkles) {
+            const timer = setTimeout(() => setShowSparkles(false), 2000);
+            return () => clearTimeout(timer);
+        }
+    }, [showSparkles]);
 
     const startCamera = async () => {
         try {
@@ -56,21 +158,16 @@ const WelcomePage = () => {
         }
     };
 
-    const fetchStats = async () => {
-        try {
-            const response = await axios.get('http://localhost:8000/api/landing-stats');
-            setStats(response.data);
-        } catch (error) {
-            console.error('Failed to fetch stats:', error);
-        }
-    };
-
     const scanFace = async () => {
-        if (!videoRef.current || !canvasRef.current || scanning) return;
+        if (!videoRef.current || !canvasRef.current || message) return;
 
-        setScanning(true);
         const canvas = canvasRef.current;
         const video = videoRef.current;
+
+        // Check if video is ready and has valid dimensions
+        if (video.readyState !== video.HAVE_ENOUGH_DATA || video.videoWidth === 0 || video.videoHeight === 0) {
+            return; // Don't start scanning if video isn't ready
+        }
 
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
@@ -78,6 +175,10 @@ const WelcomePage = () => {
         ctx.drawImage(video, 0, 0);
 
         canvas.toBlob(async (blob) => {
+            if (!blob) {
+                return;
+            }
+
             const formData = new FormData();
             formData.append('file', blob, 'frame.jpg');
 
@@ -88,45 +189,104 @@ const WelcomePage = () => {
                     { headers: { 'Content-Type': 'multipart/form-data' } }
                 );
 
+                // Only show scanning animation when face is detected
                 if (response.data.status === 'success' && response.data.name) {
-                    setRecognizedEmployee(response.data);
-                    setShowWelcome(true);
-                    fetchStats(); // Refresh stats after attendance marked
+                    setScanning(true); // Show scanning effect
 
-                    // Hide welcome message after 5 seconds
+                    // Brief delay to show the scanning animation
                     setTimeout(() => {
-                        setShowWelcome(false);
-                        setRecognizedEmployee(null);
-                    }, 5000);
+                        setScanning(false);
+                        setRecognizedEmployee(response.data);
+
+                        // Check if already present (coming back)
+                        if (response.data.already_present) {
+                            setMessage({
+                                title: `Welcome back, ${response.data.name}! 👋`,
+                                text: "Ready to punch out?",
+                                type: 'welcome'
+                            });
+                        } else {
+                            // First time check-in
+                            setMessage({
+                                title: `Welcome, ${response.data.name}! 👋`,
+                                text: response.data.message,
+                                type: 'welcome'
+                            });
+                            setShowConfetti(true); // Only show confetti on first check-in
+                        }
+                    }, 800); // Show scan animation for 800ms
                 }
             } catch (error) {
-                // Silently fail for continuous scanning
                 console.error('Scan error:', error);
-            } finally {
-                setScanning(false);
             }
         }, 'image/jpeg');
     };
 
+    const handlePunchOutSuccess = () => {
+        setMessage({
+            title: `Thank You, ${recognizedEmployee.name}! 🙏`,
+            text: "Have a great evening! See you tomorrow.",
+            type: 'goodbye'
+        });
+        setRecognizedEmployee(null);
+        setShowSparkles(true); // Trigger sparkles
+    };
+
+    const formatDate = (date) => {
+        return date.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    };
+
+    const formatTime = (date) => {
+        return date.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+    };
+
     return (
         <div className="welcome-page">
-            <div className="camera-container">
-                <video ref={videoRef} autoPlay playsInline />
-                <canvas ref={canvasRef} style={{ display: 'none' }} />
+            <canvas ref={particleCanvasRef} className="particle-canvas" />
 
-                {scanning && (
-                    <div className="scanning-indicator">
-                        <div className="scan-line"></div>
-                        <p>Scanning...</p>
+            <header className="company-header">
+                <h1>Nexoris</h1>
+            </header>
+
+            <div className="date-time-display">
+                <div className="time">{formatTime(currentTime)}</div>
+                <div className="date">{formatDate(currentTime)}</div>
+            </div>
+
+            <button className="settings-btn" onClick={() => navigate('/login')} title="Admin Panel">
+                <MdSettings size={24} />
+            </button>
+
+            <div className="content-wrapper">
+                <div className={`camera-card ${scanning ? 'scanning-pulse' : ''}`}>
+                    <div className="camera-container">
+                        <video ref={videoRef} autoPlay playsInline />
+                        <canvas ref={canvasRef} style={{ display: 'none' }} />
+
+                        {scanning && !message && (
+                            <div className="scanning-indicator">
+                                <div className="scan-line"></div>
+                            </div>
+                        )}
                     </div>
-                )}
+                </div>
 
-                {showWelcome && recognizedEmployee && (
-                    <div className="welcome-overlay fade-in">
-                        <div className="welcome-card glass">
-                            <h1>Welcome, {recognizedEmployee.name}! 👋</h1>
-                            <p className="welcome-message">{recognizedEmployee.message}</p>
-                            {recognizedEmployee.already_present && (
+                <div className="message-area">
+                    {message && (
+                        <div className={`message-card ${message.type}`}>
+                            <h1>{message.title}</h1>
+                            <p>{message.text}</p>
+
+                            {recognizedEmployee && recognizedEmployee.already_present && message.type === 'welcome' && (
                                 <button
                                     className="btn btn-primary mt-2"
                                     onClick={() => setShowPunchOut(true)}
@@ -135,61 +295,49 @@ const WelcomePage = () => {
                                 </button>
                             )}
                         </div>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
 
-            <div className="stats-sidebar glass">
-                <h3>Today's Overview</h3>
-                {stats ? (
-                    <>
-                        <div className="stat-item">
-                            <div className="stat-value">{stats.totalEmployees}</div>
-                            <div className="stat-label">Total Employees</div>
-                        </div>
-                        <div className="stat-item">
-                            <div className="stat-value text-success">{stats.presentToday}</div>
-                            <div className="stat-label">Present Today</div>
-                        </div>
-                        <div className="stat-item">
-                            <div className="stat-value text-warning">{stats.lateToday}</div>
-                            <div className="stat-label">Late Today</div>
-                        </div>
-                        <div className="stat-item">
-                            <div className="stat-value text-info">{stats.onLeave}</div>
-                            <div className="stat-label">On Leave</div>
-                        </div>
+            {showConfetti && (
+                <div className="confetti-container">
+                    {[...Array(50)].map((_, i) => (
+                        <div
+                            key={i}
+                            className="confetti"
+                            style={{
+                                left: `${Math.random() * 100}%`,
+                                animationDelay: `${Math.random() * 0.5}s`,
+                                backgroundColor: ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b'][Math.floor(Math.random() * 4)]
+                            }}
+                        />
+                    ))}
+                </div>
+            )}
 
-                        {stats.recentEntries?.length > 0 && (
-                            <div className="recent-entries">
-                                <h4>Recent Check-ins</h4>
-                                <ul>
-                                    {stats.recentEntries.map((entry, idx) => (
-                                        <li key={idx}>
-                                            <span className="entry-name">{entry.name}</span>
-                                            <span className={`entry-status badge badge-${entry.status === 'On Time' ? 'success' : 'warning'}`}>
-                                                {entry.status}
-                                            </span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
-                    </>
-                ) : (
-                    <div className="spinner"></div>
-                )}
-            </div>
-
-            <button className="admin-btn btn btn-primary" onClick={() => navigate('/login')}>
-                🔐 Admin Panel
-            </button>
+            {showSparkles && (
+                <div className="sparkles-container">
+                    {[...Array(20)].map((_, i) => (
+                        <div
+                            key={i}
+                            className="sparkle"
+                            style={{
+                                left: `${Math.random() * 100}%`,
+                                top: `${Math.random() * 100}%`,
+                                animationDelay: `${Math.random() * 0.3}s`
+                            }}
+                        >
+                            ✨
+                        </div>
+                    ))}
+                </div>
+            )}
 
             {showPunchOut && recognizedEmployee && (
                 <PunchOutModal
                     employeeName={recognizedEmployee.name}
                     onClose={() => setShowPunchOut(false)}
-                    onSuccess={fetchStats}
+                    onSuccess={handlePunchOutSuccess}
                 />
             )}
         </div>

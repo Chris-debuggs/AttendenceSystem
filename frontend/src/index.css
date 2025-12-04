@@ -1,15 +1,16 @@
 :root {
-    --bg-primary: #0a0a0f;
-    --bg-secondary: #13131a;
-    --bg-tertiary: #1a1a24;
-    --bg-card: #1f1f2e;
+    /* Light Theme Colors */
+    --bg-primary: #f8fafc;
+    --bg-secondary: #f1f5f9;
+    --bg-tertiary: #e2e8f0;
+    --bg-card: #ffffff;
 
-    --text-primary: #ffffff;
-    --text-secondary: #a0a0b0;
-    --text-muted: #6b6b7b;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
 
     --accent-primary: #6366f1;
-    --accent-hover: #5558e3;
+    --accent-hover: #4f46e5;
     --accent-glow: rgba(99, 102, 241, 0.3);
 
     --success: #10b981;
@@ -21,9 +22,9 @@
     --info: #3b82f6;
     --info-bg: rgba(59, 130, 246, 0.1);
 
-    --border-color: rgba(255, 255, 255, 0.1);
-    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+    --border-color: #e2e8f0;
+    --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 
     --border-radius: 12px;
     --border-radius-sm: 8px;
@@ -33,7 +34,7 @@
         'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
     line-height: 1.6;
     font-weight: 400;
-    color-scheme: dark;
+    color-scheme: light;
     font-synthesis: none;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
@@ -68,7 +69,7 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: var(--bg-tertiary);
+    background: var(--border-color);
     border-radius: 5px;
 }
 
@@ -150,7 +151,7 @@ button {
 }
 
 .btn-secondary:hover {
-    background: var(--bg-card);
+    background: var(--bg-secondary);
     border-color: var(--accent-primary);
 }
 
@@ -181,7 +182,7 @@ textarea {
     font-family: inherit;
     width: 100%;
     padding: 0.75rem 1rem;
-    background: var(--bg-tertiary);
+    background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-sm);
     color: var(--text-primary);
@@ -208,17 +209,18 @@ input::placeholder {
     border-radius: var(--border-radius);
     padding: 1.5rem;
     transition: var(--transition);
+    box-shadow: var(--shadow);
 }
 
 .card:hover {
-    border-color: rgba(255, 255, 255, 0.2);
+    border-color: var(--accent-primary);
     transform: translateY(-2px);
     box-shadow: var(--shadow-lg);
 }
 
 /* Glass Effect */
 .glass {
-    background: rgba(31, 31, 46, 0.7);
+    background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border: 1px solid var(--border-color);
