@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useToast } from '../context/ToastContext';
 import ConfirmationModal from '../components/ConfirmationModal';
-import './LeaveManagement.css';
+
 
 const LeaveManagement = () => {
     const [year, setYear] = useState(new Date().getFullYear());

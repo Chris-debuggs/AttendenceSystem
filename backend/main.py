@@ -1115,7 +1115,7 @@ def export_attendance_csv(
             """
             SELECT employee_id, date, status
             FROM attendance
-            WHERE date >= %s AND date <= %s
+            WHERE date >= ? AND date <= ?
             """,
             (start_date, end_date)
         )
@@ -1128,7 +1128,7 @@ def export_attendance_csv(
             """
             SELECT employee_id, leave_date
             FROM leaves
-            WHERE leave_date >= %s AND leave_date <= %s AND status = 'approved'
+            WHERE leave_date >= ? AND leave_date <= ? AND status = 'approved'
             """,
             (start_date, end_date)
         )
@@ -1140,7 +1140,7 @@ def export_attendance_csv(
             """
             SELECT date, name
             FROM holidays
-            WHERE date >= %s AND date <= %s AND type != 'WORKING_DAY'
+            WHERE date >= ? AND date <= ? AND type != 'WORKING_DAY'
             """,
             (start_date, end_date)
         )
@@ -1153,6 +1153,19 @@ def export_attendance_csv(
         while d <= end_date:
             all_dates.append(d)
             d += timedelta(days=1)
+
+        # Parse joining dates to date objects
+        joining_dates = {}
+        for row in employees:
+            emp_id = row[0]
+            joining_date_str = row[5]  # joining_date is at index 5
+            if joining_date_str:
+                try:
+                    joining_dates[emp_id] = datetime.strptime(joining_date_str, '%Y-%m-%d').date()
+                except ValueError:
+                    joining_dates[emp_id] = None
+            else:
+                joining_dates[emp_id] = None
 
         # Filter employees by status if needed (status filter is for attendance status, e.g. Present, Absent, etc.)
         filtered_employees = employees
@@ -1173,7 +1186,8 @@ def export_attendance_csv(
             header = ['Employee Name'] + [d.strftime('%Y-%m-%d') for d in all_dates]
             writer.writerow(header)
             for row in filtered_employees:
-                emp_id, name, dept, etype, gender, joining_date = row
+                emp_id, name, dept, etype, gender, joining_date_str = row
+                joining_date = joining_dates.get(emp_id)
                 rowdata = [name]
                 for d in all_dates:
                     cell_status = ''
@@ -1202,8 +1216,9 @@ def export_attendance_csv(
                 rowdata = [d.strftime('%Y-%m-%d')]
                 for row in filtered_employees:
                     emp_id = row[0]
+                    joining_date = joining_dates.get(emp_id)
                     cell_status = ''
-                    if joining_dates.get(emp_id) and d < joining_dates[emp_id]:
+                    if joining_date and d < joining_date:
                         cell_status = ''
                     else:
                         s = att_map.get((emp_id, d)) or leave_map.get((emp_id, d)) or (holiday_map.get(d) and 'H')
@@ -1214,7 +1229,7 @@ def export_attendance_csv(
                                 cell_status = 'H'
                             else:
                                 cell_status = 'A'
-                        if joining_dates.get(emp_id) and d == joining_dates[emp_id]:
+                        if joining_date and d == joining_date:
                             cell_status = f"{cell_status} (Joining Day)"
                     rowdata.append(cell_status)
                 writer.writerow(rowdata)

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useToast } from '../context/ToastContext';
-import './PayrollPage.css';
+
 
 const PayrollPage = () => {
     const [year, setYear] = useState(new Date().getFullYear());

@@ -5,7 +5,9 @@ import hashlib
 from datetime import datetime
 import os
 
-DB_NAME = "attendance.db"
+# Use absolute path to backend directory to ensure all scripts use the same database
+BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_NAME = os.path.join(BACKEND_DIR, "attendance.db")
 
 def get_db_connection():
     conn = sqlite3.connect(DB_NAME)
